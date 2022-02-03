@@ -13,12 +13,12 @@ class MyMediaWiki < MyMediaPages
   def initialize(media_type: media_type='wiki',
        public_type: @public_type=media_type, ext: '.(html|md|txt)',
                  config: nil, log: nil, debug: false)
-    
+
     super(media_type: media_type, public_type: @public_type=media_type,
             ext: '.(html|md|txt)', config: config, log: log, debug: debug)
-    
-  end  
-  
+
+  end
+
   def copy_publish(filename, raw_msg='')
 
     @log.info 'MyMediaWiki inside copy_publish' if @log
@@ -63,6 +63,10 @@ class MyMediaWiki < MyMediaPages
 
     modify_xml(doc, raw_dest_xml)
 
+    tags = doc.root.xpath('summary/tags/tag/text()')
+    raw_msg = "%s %s" % [doc.root.text('summary/title'),
+            tags.map {|x| "#%s" % x }.join(' ')]
+
     @log.info 'mymedia-wiki/copy_publish: after modify_xml' if @log
 
     File.write destination, xsltproc("#{@home}/r/xsl/#{@public_type}.xsl",
@@ -70,16 +74,35 @@ class MyMediaWiki < MyMediaPages
 
     target_url = [@website, @public_type, html_filename].join('/')
 
+    json_filepath = "%s/%s/dynarex.json" % [@home, @public_type]
+    publish_dxlite(json_filepath, {title: raw_msg, url: target_url})
+=begin
     msg = "%s %s" % [target_url, raw_msg ]
     sps_message = ['publish', @public_type,
                     target_url, raw_msg]
 
     send_message(msg: sps_message.join(' '))
-
+=end
     [raw_msg, target_url]
 
   end
-  
+
+  def writecopy_publish(raws)
+
+    s = raws.strip.gsub(/\r/,'')
+
+    title = escape(s.lines[0].chomp)
+    filename = title + '.txt'
+    File.write File.join(@media_src, filename), s
+
+    copy_publish filename
+  end
+
+  private
+
+  def escape(s)
+    s.gsub(/ +/,'_')#.gsub(/'/,'%27')
+  end
+
 
 end
-
