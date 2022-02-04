@@ -9,6 +9,7 @@ class MyMediaWikiError < Exception
 end
 
 class MyMediaWiki < MyMediaPages
+  include RXFHelperModule
 
   def initialize(media_type: media_type='wiki',
        public_type: @public_type=media_type, ext: '.(html|md|txt)',
@@ -27,14 +28,14 @@ class MyMediaWiki < MyMediaPages
 
     html_filename = basename(@media_src, src_path).sub(/(?:md|txt)$/,'html')
 
-    FileUtils.mkdir_p File.dirname(@home + "/#{@public_type}/" + html_filename)
+    FileX.mkdir_p File.dirname(@home + "/#{@public_type}/" + html_filename)
     #FileUtils.write html,  @home + "/#{@public_type}/" + html_filename
     public_path = "#{@public_type}/" + html_filename
 
     ext = File.extname(src_path)
 
     raw_destination = "%s/r/%s" % [@home, public_path]
-    FileUtils.mkdir_p File.dirname(raw_destination)
+    FileX.mkdir_p File.dirname(raw_destination)
     raw_dest_xml = raw_destination.sub(/html$/,'xml')
 
     destination = File.join(@home, public_path)
@@ -48,7 +49,7 @@ class MyMediaWiki < MyMediaPages
       puts '@public_type: ' + @public_type.inspect
     end
 
-    FileUtils.cp src_path, x_destination
+    FileX.cp src_path, x_destination
 
     source = x_destination[/\/r\/#{@public_type}.*/]
 
@@ -56,7 +57,7 @@ class MyMediaWiki < MyMediaPages
     s = @website + source
     relative_path = s[/https?:\/\/[^\/]+([^$]+)/,1]
 
-    src_content = File.read src_path
+    src_content = FileX.read src_path
     doc = xml(src_content, relative_path, filename)
 
     return unless doc
@@ -69,7 +70,7 @@ class MyMediaWiki < MyMediaPages
 
     @log.info 'mymedia-wiki/copy_publish: after modify_xml' if @log
 
-    File.write destination, xsltproc("#{@home}/r/xsl/#{@public_type}.xsl",
+    FileX.write destination, xsltproc("#{@home}/r/xsl/#{@public_type}.xsl",
                                      raw_dest_xml)
 
     target_url = [@website, @public_type, html_filename].join('/')
@@ -93,7 +94,7 @@ class MyMediaWiki < MyMediaPages
 
     title = escape(s.lines[0].chomp)
     filename = title + '.txt'
-    File.write File.join(@media_src, filename), s
+    FileX.write File.join(@media_src, filename), s
 
     copy_publish filename
   end
