@@ -9,7 +9,7 @@ class MyMediaWikiError < Exception
 end
 
 class MyMediaWiki < MyMediaPages
-  include RXFHelperModule
+  include RXFileIOModule
 
   def initialize(media_type: media_type='wiki',
        public_type: @public_type=media_type, ext: '.(html|md|txt)',
