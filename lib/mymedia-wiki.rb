@@ -26,6 +26,7 @@ class MyMediaWiki < MyMediaPages
     @filename = filename
     src_path = File.join(@media_src, filename)
 
+
     html_filename = basename(@media_src, src_path).sub(/(?:md|txt)$/,'html')
 
     FileX.mkdir_p File.dirname(@home + "/#{@public_type}/" + html_filename)
@@ -74,6 +75,7 @@ class MyMediaWiki < MyMediaPages
                                      raw_dest_xml)
 
     target_url = [@website, @public_type, html_filename].join('/')
+    target_url.sub!(/\.html$/,'') if @omit_html_ext
 
     json_filepath = "%s/%s/dynarex.json" % [@home, @public_type]
     publish_dxlite(json_filepath, {title: raw_msg, url: target_url})
@@ -85,6 +87,31 @@ class MyMediaWiki < MyMediaPages
     send_message(msg: sps_message.join(' '))
 =end
     [raw_msg, target_url]
+
+  end
+
+  def delete(id)
+
+    dx = DxLite.new(File.join(@home, @public_type, 'dynarex.json'),
+                    autosave: true)
+
+    # Use the id to identify the entry in the dynarex.json file
+    rx = dx.find_by_id id
+    return unless rx
+
+    # Use the File.basename(url) to identify the file name.
+    # Note: Strip out the extension before adding the target ext.
+    filename = File.basename(rx.url).sub(/\.html$/,'')
+
+    # Within r/wiki delete the 2 files: .txt and .xml
+    FileX.rm File.join(@home, 'r', @public_type, filename + '.txt')
+    FileX.rm File.join(@home, 'r', @public_type, filename + '.xml')
+
+    # Within wiki, delete the .html file
+    FileX.rm File.join(@home, @public_type, filename + '.html')
+
+    # Delete the entry from the dynarex.json file.
+    dx.delete id
 
   end
 
@@ -104,6 +131,5 @@ class MyMediaWiki < MyMediaPages
   def escape(s)
     s.gsub(/ +/,'_')#.gsub(/'/,'%27')
   end
-
 
 end

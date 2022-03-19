@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
   s.name = 'mymedia-wiki'
-  s.version = '0.2.1'
+  s.version = '0.3.0'
   s.summary = 'Transforms a kind of Markdown document using Kramdown and XSLT.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/mymedia-wiki.rb']
-  s.add_runtime_dependency('mymedia-pages', '~> 0.5', '>=0.5.1')
+  s.add_runtime_dependency('mymedia-pages', '~> 0.5', '>=0.5.2')
   s.signing_key = '../privatekeys/mymedia-wiki.pem'
   s.cert_chain  = ['gem-public_cert.pem']
   s.license = 'MIT'
