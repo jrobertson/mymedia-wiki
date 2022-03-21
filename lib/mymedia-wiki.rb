@@ -126,10 +126,4 @@ class MyMediaWiki < MyMediaPages
     copy_publish filename
   end
 
-  private
-
-  def escape(s)
-    s.gsub(/ +/,'_')#.gsub(/'/,'%27')
-  end
-
 end
