@@ -8,7 +8,7 @@ require 'mymedia-pages'
 class MyMediaWikiError < Exception
 end
 
-class MyMediaWiki < MyMediaPages
+class MyMediaWikiBase < MyMediaPages
   include RXFileIOModule
 
   def initialize(media_type: media_type='wiki',
@@ -124,6 +124,54 @@ class MyMediaWiki < MyMediaPages
     FileX.write File.join(@media_src, filename), s
 
     copy_publish filename
+  end
+
+
+end
+
+class MyMediaWiki < MyMediaWikiBase
+
+  def initialize(config: nil, newpg_url: '', log: nil, debug: false)
+
+    @url4new = newpg_url
+    super(config: config, log: log, debug: debug)
+  end
+
+  def writecopy_publish(raws)
+
+    # The content to be published might contain 1 or more wiki link
+    #    e.g. [[topic2022]] or [[topic2022url|topic2022
+    # Here, the link will be transformed to an actual hyperlink which points
+    # to a valid wiki page
+
+    s = raws.gsub(/\[\[([^\]]+)\]\]/) do |x|
+
+      puts 'x: ' + x.inspect if @debug
+      title = $1
+      puts 'searching for title ' + title.inspect  if @debug
+
+      # does the title exist?
+      r = find_title(title)
+
+      puts 'r: ' + r.inspect  if @debug
+
+      if r then
+        '<a href="' + '/wiki/' + r.title[/^#{title}/i] + '">' + title +'</a>'
+      else
+        '<a href="' + url4new + escape(title) + '" class="new" title="' \
+            + title + ' (page does not exist)">' + title + '</a>'
+      end
+
+    end
+
+    super(s)
+
+  end
+
+  private
+
+  def find_title(s)
+    find /^#{s} (?=#)/i
   end
 
 end
