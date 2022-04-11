@@ -131,10 +131,11 @@ end
 
 class MyMediaWiki < MyMediaWikiBase
 
-  def initialize(config: nil, newpg_url: '', log: nil, debug: false)
+  def initialize(media_type: 'wiki', config: nil, newpg_url: '', log: nil,
+                 debug: false)
 
     @url4new = newpg_url
-    super(config: config, log: log, debug: debug)
+    super(media_type: media_type, config: config, log: log, debug: debug)
   end
 
   def writecopy_publish(raws)
@@ -158,7 +159,7 @@ class MyMediaWiki < MyMediaWikiBase
       if r then
         '<a href="' + '/wiki/' + r.title[/^#{title}/i] + '">' + title +'</a>'
       else
-        '<a href="' + url4new + escape(title) + '" class="new" title="' \
+        '<a href="' + @url4new + escape(title) + '" class="new" title="' \
             + title + ' (page does not exist)">' + title + '</a>'
       end
 

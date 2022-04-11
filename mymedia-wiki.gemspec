@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'mymedia-wiki'
-  s.version = '0.4.0'
+  s.version = '0.4.1'
   s.summary = 'Transforms a kind of Markdown document using Kramdown and XSLT.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/mymedia-wiki.rb']
