@@ -17,15 +17,15 @@ class MyMediaWikiBase < MyMediaPages
 
     super(media_type: media_type, public_type: @public_type=media_type,
             ext: '.(html|md|txt)', config: config, log: log, debug: debug)
-
-  end
-
+    
+  end  
+  
   def copy_publish(filename, raw_msg='')
 
     @log.info 'MyMediaWiki inside copy_publish' if @log
     @filename = filename
-    src_path = File.join(@media_src, filename)
-
+    #jr 2011-10-09 src_path = File.join(@media_src, filename)
+    src_path = filename
 
     html_filename = basename(@media_src, src_path).sub(/(?:md|txt)$/,'html')
 
@@ -35,11 +35,11 @@ class MyMediaWikiBase < MyMediaPages
 
     ext = File.extname(src_path)
 
-    raw_destination = "%s/r/%s" % [@home, public_path]
+    raw_destination = [@home, @www, 'r', public_path].join('/')
     FileX.mkdir_p File.dirname(raw_destination)
     raw_dest_xml = raw_destination.sub(/html$/,'xml')
 
-    destination = File.join(@home, public_path)
+    destination = File.join(@home, @www, public_path)
 
     puts 'raw_destination: ' + raw_destination.inspect if @debug
 
@@ -71,13 +71,14 @@ class MyMediaWikiBase < MyMediaPages
 
     @log.info 'mymedia-wiki/copy_publish: after modify_xml' if @log
 
-    FileX.write destination, xsltproc("#{@home}/r/xsl/#{@public_type}.xsl",
-                                     raw_dest_xml)
+    FileX.write destination,
+        xsltproc(File.join(@home, @www, 'xsl', @public_type + '.xsl'),
+                  raw_dest_xml)    
 
     target_url = [@website, @public_type, html_filename].join('/')
     target_url.sub!(/\.html$/,'') if @omit_html_ext
 
-    json_filepath = "%s/%s/dynarex.json" % [@home, @public_type]
+    json_filepath = [@home, @www, @public_type, 'dynarex.json'].join('/')
     publish_dxlite(json_filepath, {title: raw_msg, url: target_url})
 =begin
     msg = "%s %s" % [target_url, raw_msg ]
@@ -92,7 +93,9 @@ class MyMediaWikiBase < MyMediaPages
 
   def delete(id)
 
-    dx = DxLite.new(File.join(@home, @public_type, 'dynarex.json'),
+    puts 'inside delete ' if @debug
+    
+    dx = DxLite.new(File.join(@home, @www, @public_type, 'dynarex.json'),
                     autosave: true)
 
     # Use the id to identify the entry in the dynarex.json file
@@ -104,28 +107,17 @@ class MyMediaWikiBase < MyMediaPages
     filename = File.basename(rx.url).sub(/\.html$/,'')
 
     # Within r/wiki delete the 2 files: .txt and .xml
-    FileX.rm File.join(@home, 'r', @public_type, filename + '.txt')
-    FileX.rm File.join(@home, 'r', @public_type, filename + '.xml')
+    FileX.rm File.join(@home, @www,'r',  @public_type, filename + '.txt')
+    FileX.rm File.join(@home, @www,'r', @public_type, filename + '.xml')
 
     # Within wiki, delete the .html file
-    FileX.rm File.join(@home, @public_type, filename + '.html')
+    FileX.rm File.join(@home, @www, @public_type, filename + '.html')
 
     # Delete the entry from the dynarex.json file.
     dx.delete id
 
   end
-
-  def writecopy_publish(raws)
-
-    s = raws.strip.gsub(/\r/,'')
-
-    title = escape(s.lines[0].chomp)
-    filename = title + '.txt'
-    FileX.write File.join(@media_src, filename), s
-
-    copy_publish filename
-  end
-
+  
 
 end
 
@@ -133,7 +125,8 @@ class MyMediaWiki < MyMediaWikiBase
 
   def initialize(media_type: 'wiki', config: nil, newpg_url: '', log: nil,
                  debug: false)
-
+    
+    puts 'inside MyMediaWik initialize' if debug
     @url4new = newpg_url
     super(media_type: media_type, config: config, log: log, debug: debug)
   end
@@ -176,3 +169,62 @@ class MyMediaWiki < MyMediaWikiBase
   end
 
 end
+
+
+class WikiTester23 < MyMediaWiki
+  
+  # it is assumed this class will be executed from a test directory 
+  # containing the following auxillary files:
+  #  - wiki.xsl
+  #  - index-template.html
+  
+  def initialize(config: '', cur_dir:  '', debug: false)
+    
+    @cur_dir = cur_dir
+    super(config: config, debug: debug)
+    @parent_dir = '/tmp/media'
+    @dir = 'wiki'
+    
+  end
+
+  def cleanup()
+
+    # remove the previous test files
+    #
+    FileX.rm_r '/tmp/www/*', force: true
+    puts 'Previous /tmp/www files now removed!'
+  end
+  
+  def prep()
+    
+    #return
+    # create the template files and directories
+    #
+    xsl_src = File.join(@cur_dir, 'wiki.xsl')
+    www_dest = '/tmp/www/xsl/wiki.xsl'
+    r_dest = '/tmp/www/r/xsl/wiki.xsl'      
+    index_dest = '/tmp/www/wiki/index-template.html'
+
+    FileX.mkdir_p File.dirname(www_dest)
+    FileX.cp xsl_src, www_dest
+
+    FileX.mkdir_p File.dirname(r_dest)
+    FileX.cp xsl_src, r_dest
+
+    FileX.mkdir_p File.dirname(index_dest)
+    FileX.cp File.join(@cur_dir, 'index-template.html'), '/tmp/www/wiki/index-template.html'
+
+    filepath = File.join(@parent_dir, @dir)
+    FileUtils.mkdir_p filepath
+  end
+
+  # create the input file
+  #  
+  def write(filename: '', content: '')
+
+    File.write File.join(@parent_dir, @dir, filename), content
+    puts 'debug: filename: ' + filename.inspect
+
+  end
+end
+
