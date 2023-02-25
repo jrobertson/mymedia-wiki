@@ -173,58 +173,19 @@ end
 
 class WikiTester23 < MyMediaWiki
   
+  include PagesTestSetup
   # it is assumed this class will be executed from a test directory 
   # containing the following auxillary files:
   #  - wiki.xsl
   #  - index-template.html
   
-  def initialize(config: '', cur_dir:  '', debug: false)
+  def initialize(config: '', cur_dir:  '', www_dir: '/tmp/www', 
+                 media_dir: '/tmp/media', debug: false)
+        
+    super(config: config, debug: debug)    
+    set_paths(cur_dir, www_dir, media_dir)    
     
-    @cur_dir = cur_dir
-    super(config: config, debug: debug)
-    @parent_dir = '/tmp/media'
-    @dir = 'wiki'
-    
   end
 
-  def cleanup()
-
-    # remove the previous test files
-    #
-    FileX.rm_r '/tmp/www/*', force: true
-    puts 'Previous /tmp/www files now removed!'
-  end
-  
-  def prep()
-    
-    #return
-    # create the template files and directories
-    #
-    xsl_src = File.join(@cur_dir, 'wiki.xsl')
-    www_dest = '/tmp/www/xsl/wiki.xsl'
-    r_dest = '/tmp/www/r/xsl/wiki.xsl'      
-    index_dest = '/tmp/www/wiki/index-template.html'
-
-    FileX.mkdir_p File.dirname(www_dest)
-    FileX.cp xsl_src, www_dest
-
-    FileX.mkdir_p File.dirname(r_dest)
-    FileX.cp xsl_src, r_dest
-
-    FileX.mkdir_p File.dirname(index_dest)
-    FileX.cp File.join(@cur_dir, 'index-template.html'), '/tmp/www/wiki/index-template.html'
-
-    filepath = File.join(@parent_dir, @dir)
-    FileUtils.mkdir_p filepath
-  end
-
-  # create the input file
-  #  
-  def write(filename: '', content: '')
-
-    File.write File.join(@parent_dir, @dir, filename), content
-    puts 'debug: filename: ' + filename.inspect
-
-  end
 end
 
